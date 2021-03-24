@@ -71,39 +71,46 @@ const userSchema = new mongoose.Schema({
                 required:true
             }
         }
-    ],
-    drName:{
-        type:mongoose.Schema.Types.ObjectId
-        //كزا دكتور 
-        //نوضح الكشوفات القديمة او نمسح كل ما الكشف يخلص
-    },
-    clinicName:{
-        type:mongoose.Schema.Types.ObjectId
-    },
-    patientStatus:{
-        type:String
-    },
-    timeAndDate:{
-        type:Date
-    },
-    analysis:{
-        ///نرفع ملفات ازاي
-        type:String
-    },
-    checkUp:[{
-        checkUpStatus:{
-            type:Boolean
-        },
-        checkUpType:{
-            type:String,
-            enum:['استشارة','كشف']
-        }
-    }]
+    ]
+    // drName:{
+    //     type:mongoose.Schema.Types.ObjectId
+    //     //كزا دكتور 
+    //     //نوضح الكشوفات القديمة او نمسح كل ما الكشف يخلص
+    // },
+    // clinicName:{
+    //     type:mongoose.Schema.Types.ObjectId
+    // },
+    // patientStatus:{
+    //     type:String
+    // },
+    // timeAndDate:{
+    //     type:Date
+    // },
+    // analysis:{
+    //     ///نرفع ملفات ازاي
+    //     type:String
+    // },
+    // checkUp:[{
+    //     checkUpStatus:{
+    //         type:Boolean
+    //     },
+    //     checkUpType:{
+    //         type:String,
+    //         enum:['استشارة','كشف']
+    //     }
+    // }]
     // userProfile:{
     //     type:String
     // },
 },
 {timestamps:true})
+//relations with others models
+//doctors - date&time
+// userSchema.virtual('modelName',{
+//     ref:'modelName', //اسم المودل الي هربطه بيه
+//     localField:'_id', //اسم المفتاح من المودل التاني
+//     foreignFeild:'userId' //اسم المفتاح الي هيتربط بيه 
+// })
 
 userSchema.methods.toJSON = function(){
     const user = this.toObject()
@@ -122,6 +129,7 @@ userSchema.methods.toJSON = function(){
 
 userSchema.pre('save',async function(next){
     const user = this
+    //auto increment
     lastUser = await User.findOne({}).sort({_id:-1})
     if(!lastUser){
         user.userId = 1
@@ -167,6 +175,13 @@ userSchema.methods.generateToken = async function(){
     await user.save()
     return token
 }
-
+//همسح المواعيد لخاصة بالمريض الواحد
+// اعملها بعد ما اربط المودل دا بمودل المواعيد
+// userSchema.pre('remove',async function(next){
+//     user = this
+//     //بمسح كل الداتا المتعلقة باليوزر دا بعدين اسمحه كله على بعضه
+//     await dateModel.deleteMany({userId:user._id})
+//     next()
+// })
 const User = mongoose.model('User',userSchema)
 module.exports = User

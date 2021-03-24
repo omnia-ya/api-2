@@ -1,8 +1,8 @@
 const express = require('express')
 const User = require('../models/user.model')
 const router = new express.Router()
-// const userModel = require('../models/user.model')
 const auth = require('../middelware/auth')
+const { update } = require('../models/user.model')
 //show all
 router.get('/all',async(req,res)=>{
     try{
@@ -63,9 +63,17 @@ router.post('/login',async(req,res)=>{
     }
 })
 //logout
-router.post('logout',async(req,res)=>{
+router.post('/logout',async(req,res)=>{
     try{
-
+        req.user.tokens = req.user.tokens.filter((element)=>{
+            return element!=req.token
+        })
+        await req.user.save()
+        res.status(200).send({
+            apiStatus:true,
+            data:'',
+            message:"logged out"
+        })
     }
     catch(e){
         res.status(500).send({
@@ -75,5 +83,70 @@ router.post('logout',async(req,res)=>{
         })
     }
 })
-
+//logout from all devices
+router.post('/logoutAll',async(req,res)=>{
+    try{
+        req.user.tokens = []
+        await req.user.save() 
+        res.status(200).send({
+            apiStatus:true,
+            data:'',
+            message:"logged out from all"
+        }) 
+    }
+    catch(e){
+        res.status(500).send({
+            apiStatus:false,
+            data:e.message,
+            message:"falid logout"
+        })
+    }
+})
+//show profile
+router.get('/profile' ,auth, async(req,res)=>{
+    res.send(req.user)
+})
+//remove account
+router.delete('/me',auth, async(req,res)=>{
+    try{
+        await req.user.remove()
+        res.status(200).send({
+            apiStatus: true,
+            data: "",
+            message:'account removed'
+        })
+    }
+    catch(e){
+        res.status(500).send({
+            apiStatus: false,
+            data: e.message,
+            message:'user register error'
+        })
+    }
+})
+//edit profile
+router.patch('/user/profile',auth,async(req,res)=>{
+    requestedUpdates = Object.keys(req.body)
+    allowed = ['name','password']
+    isValid = requestedUpdates.every(update=> allowed.includes(update))
+    if(!isValid) return rew.send('invalid')
+    try{
+        requestedUpdates.forEash(update=> req.user[update] = req.body[update])
+        await req.user.save()
+        res.status(200).send({
+            apiStatus:true,
+            data:'',
+            message:'updated'
+        })
+    }
+    catch(e){
+        res.status(500).send({
+            apiStatus:false,
+            data:e.message,
+            message:'falid'
+        })
+    }
+    
+    
+})
 module.exports = router
